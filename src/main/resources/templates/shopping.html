@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>购物车</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+        .letter {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="shopping">
+        <div class="ui pointing menu">
+            <a class="item letter" th:href="@{/index}">
+                首页
+            </a>
+            <a class="item letter active" th:href="@{/shopping}">
+                购物车
+            </a>
+            <a class="item letter" th:href="@{/orderInfo}">
+                订单查询
+            </a>
+            <div class="ui compact right menu">
+                <div class="ui simple dropdown item">
+                    hello,<span th:text="${session.username}"></span>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" @click="userInfo">个人信息</div>
+                        <div class="item" @click="logout">注销</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui segment" v-for="info in shopInfos" :key="info.productId">
+            <img class="ui middle aligned tiny image" :src="'/images/' + info.productId + '.png'">
+            <span class="letter">{{info.productDescription}}</span>
+            <span class="letter" style="margin-left: 50px;margin-right: 30px">${{info.price.toFixed(2)}}</span>
+            <button class="ui negative basic button" @click="removeFromShop(info.productId)">删除</button>
+        </div>
+
+
+    </div>
+
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#shopping',
+            data: {
+                userId: '',
+                shopInfos: []
+            },
+            mounted() {
+                this.userId = [[${session.userId}]];
+                this.getShopInfo();
+            },
+            methods: {
+                logout() {
+                    axios.get('/logout')
+                        .then(response => {
+                            window.location.href = '/login';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                getShopInfo() {
+                    axios.post('/getShopInfo', {userId: this.userId})
+                        .then(response => {
+                            this.shopInfos = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                removeFromShop(productId) {
+                    axios.post('/removeFromShop', {userId: this.userId, productId: productId})
+                        .then(response => {
+                            if (response.data === 'success') {
+                                this.getShopInfo();
+                            }
+                        })
+                        .catch(error => {
+                            alert('删除失败');
+                        });
+                },
+                userInfo() {
+                    axios.get('/userInfo')
+                        .then(response => {
+                            window.location.href = '/userInfo';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

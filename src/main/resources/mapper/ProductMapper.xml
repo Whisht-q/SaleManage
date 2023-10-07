@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tust.salemanage.mapper.ProductMapper">
+    <select id="getAllProduct" resultType="com.tust.salemanage.bean.Product">
+        select *
+        from Product
+    </select>
+
+    <select id="getProductById" resultType="com.tust.salemanage.bean.Product">
+        select *
+        from Product
+        where category_id = #{categoryId}
+    </select>
+
+    <select id="getProductInfoById" resultType="com.tust.salemanage.bean.Product">
+        select *
+        from Product
+        where product_id = #{productId}
+    </select>
+
+    <select id="searchProduct" resultType="com.tust.salemanage.bean.Product">
+        SELECT *
+        FROM Product
+        WHERE product_description LIKE #{keyword}
+    </select>
+
+    <select id="getShopInfo" resultType="com.tust.salemanage.bean.Product">
+        select product_id,product_description, price
+        from Product
+        where product_id in (select product_id from Collections where user_id = #{userId})
+    </select>
+
+    <select id="getInsertNum">
+        select AUTO_INCREMENT
+        from information_schema.TABLES
+        where TABLE_NAME = 'product'
+    </select>
+
+    <insert id="insertProduct" parameterType="com.tust.salemanage.bean.Product">
+        insert into Product(product_name, price, category_id,product_description) values
+        (#{productName},#{price},#{categoryId},#{productDescription})
+    </insert>
+</mapper>

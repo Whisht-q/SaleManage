@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>注册</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+        .full-screen {
+            width: 60vw;
+            height: 60vh;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="register" class="ui placeholder segment full-screen">
+        <div class="ui two column very relaxed stackable grid">
+            <div class="middle aligned column">
+                <div class="ui big olive button" th:onclick="window.location.href='/login';">
+                    <i class="backward icon"></i>
+                    返回
+                </div>
+            </div>
+            <div class="ui form middle aligned column">
+                <div class="field">
+                    <label style="font-size: 24px;margin-bottom: 10px">用户名</label>
+                    <input v-model="username" type="text" name="username" placeholder="username">
+                </div>
+                <div class="field">
+                    <label style="font-size: 24px;margin-bottom: 10px">密码</label>
+                    <input v-model="password" type="password" name="password" placeholder="password">
+                </div>
+                <div class="field">
+                    <label style="font-size: 24px;margin-bottom: 10px">邮箱</label>
+                    <input v-model="email" type="text" name="email">
+                </div>
+                <button class="ui button" type="submit" @click="registerUser">注册</button>
+            </div>
+        </div>
+        <div class="ui vertical divider">
+            Or
+        </div>
+    </div>
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#register',
+            data: {
+                username: '',
+                password: '',
+                email: ''
+            },
+            methods: {
+                registerUser() {
+                    if (!(this.username && this.password && this.email)) {
+                        alert("请填写所有信息");
+                        return;
+                    }
+                    axios.post('/registerUser', {username: this.username, password: this.password, email: this.email})
+                        .then(response => {
+                            if (response.data === 'success') {
+                                axios.post('/checkLogin', {username: this.username, password: this.password})
+                                    .then(response => {
+                                        window.location.href = '/index';
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                    });
+                            }
+                        })
+                        .catch(error => {
+                            // 处理请求错误
+                            alert("用户名已存在");
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

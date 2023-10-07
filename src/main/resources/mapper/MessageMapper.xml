@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tust.salemanage.mapper.MessageMapper">
+    <insert id="addComment">
+        insert into Message (user_id, product_id, message_content, message_time)
+        VALUES (#{userId}, #{productId}, #{messageComment}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <select id="getComment" resultType="com.tust.salemanage.bean.Message">
+        select message_id,user_id, product_id, message_content as messageComment, message_time
+        from Message
+        where product_id = #{productId}
+    </select>
+</mapper>

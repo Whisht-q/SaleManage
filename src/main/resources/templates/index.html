@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+        .letter {
+            font-size: 20px;
+        }
+
+        .centered {
+            display: flex;
+            justify-content: center;
+            width: 80%;
+            margin: 0 100px;
+        }
+
+        .ui.card {
+            width: calc(33.33% - 20px);
+            margin: 10px;
+            box-sizing: border-box;
+        }
+
+        .img-size {
+            width: 382px; /* 设置宽度 */
+            height: 391px; /* 设置高度 */
+        }
+
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <div class="ui pointing menu">
+            <a class="item letter active" th:href="@{/index}">
+                首页
+            </a>
+            <a class="item letter" th:href="@{/shopping}">
+                购物车
+            </a>
+            <a class="item letter" th:href="@{/orderInfo}">
+                订单查询
+            </a>
+            <div class="ui compact right menu">
+                <div class="ui simple dropdown item">
+                    hello,<span th:text="${session.username}"></span>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" @click="userInfo">个人信息</div>
+                        <div class="item" @click="logout">注销</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui segment">
+            <div class="ui category search">
+                <div class="ui icon input centered">
+                    <input class="prompt" type="text" v-model="keyword" placeholder="Search...">
+                    <i class="search icon"></i>
+                </div>
+                <div class="results"></div>
+            </div>
+        </div>
+
+
+        <div class="ui grid">
+            <!--左侧菜单-->
+            <div class="three wide column">
+                <div class="ui vertical fluid tabular menu">
+                    <template v-for="(item, index) in dropdownItems">
+                        <a :key="item.categoryId" class="item" :class="{ active: activeIndex === index }"
+                           @click="activateItem(index)">
+                            {{ item.categoryName }}
+                        </a>
+                    </template>
+                </div>
+            </div>
+
+            <!--右侧内容-->
+            <div class="thirteen wide stretched column">
+                <div class="ui segment">
+                    <div style="margin-top: 20px" class="ui grid">
+                        <div class="three column row">
+                            <div v-for="item in productItems" :key="item.productId" class="column">
+                                <div style="width: 100%;margin-bottom: 20px;cursor: pointer" class="ui card"
+                                     @click="getInfo(item.productId)">
+                                    <div class="content">
+                                        <img class="img-size" :src="'/images/' + item.productId + '.png'"><br>
+                                        <h2>
+                                            {{ item.productName }}
+                                            <span style="float: right">
+                                            ${{ item.price.toFixed(2) }}
+                                        </span>
+                                        </h2>
+                                    </div>
+                                    <div class="image">
+                                        <img>
+                                    </div>
+                                    <div class="content">
+                                        <h3>{{item.productDescription}}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#menu',
+            data: {
+                dropdownItems: [],
+                productItems: [],
+                activeIndex: 0,
+                keyword: '',
+                loginName: '',
+                loginId: ''
+            },
+            mounted() {
+                this.getDropdownItems();
+                this.getCategoryProducts();
+
+            },
+            watch: {
+                activeIndex(newIndex, oldIndex) {
+                    this.getCategoryProducts();
+                },
+                keyword(newKeyword, oldKeyword) {
+                    this.search();
+                }
+            },
+            methods: {
+                getDropdownItems() {
+                    axios.get('/getCategory')
+                        .then(response => {
+                            this.dropdownItems = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching dropdown items:', error);
+                        });
+                },
+                getCategoryProducts() {
+                    axios.post('/getCategoryName', {categoryId: this.activeIndex + 1})
+                        .then(response => {
+                            this.productItems = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching product items:', error);
+                        });
+                },
+                getInfo(productId) {
+                    axios.post('/productInfo', {productId: productId})
+                        .then(response => {
+                            window.location.href = '/toProductInfo';
+                        })
+                        .catch(error => {
+                            // 处理请求错误
+                            console.error('Error:', error);
+                        });
+                },
+                search() {
+                    // 向后端发送搜索请求
+                    axios.post('/searchProduct', {productName: this.keyword})
+                        .then(response => {
+                            // 接收搜索结果
+                            this.productItems = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                activateItem(index) {
+                    this.activeIndex = index; // 激活选项
+                },
+                logout() {
+                    axios.get('/logout')
+                        .then(response => {
+                            window.location.href = '/login';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                userInfo() {
+                    axios.get('/userInfo')
+                        .then(response => {
+                            window.location.href = '/userInfo';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

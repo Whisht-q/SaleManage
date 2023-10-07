@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tust.salemanage.mapper.GoodsOrderMapper">
+    <insert id="purchase" parameterType="com.tust.salemanage.bean.GoodsOrder">
+        insert into GoodsOrder(user_id, product_id, product_name, order_date, arrival_date, total_amount)
+        VALUES (#{userId}, #{productId}, #{productName}, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_DATE, INTERVAL 3 DAY),
+                #{totalAmount})
+    </insert>
+
+    <select id="getAllOrder" parameterType="com.tust.salemanage.bean.User"
+            resultType="com.tust.salemanage.bean.GoodsOrder">
+        select *
+        from GoodsOrder
+        where user_id = #{userId}
+    </select>
+</mapper>

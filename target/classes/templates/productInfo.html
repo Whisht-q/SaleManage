@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>商品信息</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+        .centered {
+            display: flex;
+            justify-content: center;
+            width: 60%;
+            margin: auto 100px;
+        }
+
+        .img-size {
+            width: 382px; /* 设置宽度 */
+            height: 391px; /* 设置高度 */
+        }
+    </style>
+</head>
+<body>
+    <div style="margin-left: auto;margin-right: auto" id="info" class="ui segment centered">
+        <div style="width: 100%;margin-bottom: 20px;" class="ui card">
+            <div class="content">
+                <img class="img-size" :src="'/images/' + productId + '.png'"><br>
+                <h2>
+                    {{ productInfo.productName }}
+                    <span style="float: right">
+                        ${{ productInfo.price.toFixed(2)}}
+                    </span>
+                </h2>
+            </div>
+            <div class="image">
+                <img>
+            </div>
+            <div class="content">
+                <h3>{{productInfo.productDescription}}</h3>
+            </div>
+            <div class="extra content">
+                <div style="margin-bottom: 20px" class="ui labeled button" tabindex="0">
+                    <div v-if="isCollected === 'none'" class="ui button" @click="addShop">
+                        <i class="heart icon"></i> 加入购物车
+                    </div>
+                    <div v-else="isCollected === 'active'" class="ui red disabled button" @click="addShop">
+                        <i class="heart icon"></i> 加入购物车
+                    </div>
+                    <a class="ui basic red left pointing label">
+                        {{collectedNum}}
+                    </a>
+
+                    <div style="margin-left: 400px" class="ui positive button" @click="purchase">
+                        <i class="shop icon"></i> 购买
+                    </div>
+                </div>
+                <br>
+                <form class="ui reply form">
+                    <div class="field">
+                        <textarea v-model="messageComment"></textarea>
+                    </div>
+                    <div class="ui primary submit labeled icon button" @click="addComment">
+                        <i class="icon edit"></i> Add Comment
+                    </div>
+                </form>
+            </div>
+
+            <div class="ui comments">
+                <h3 class="ui dividing header">Comments</h3>
+                <div style="margin-left: 20px" class="comment" v-for="info in commentInfos" :key="info.messageId">
+                    <div class="content">
+                        <a class="author">{{info.username}}</a>
+                        <div class="metadata">
+                            <span class="date">{{formatDateTime(info.messageTime)}}</span>
+                        </div>
+                        <div style="margin-left: 20px" class="text">
+                            {{info.messageComment}}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#info',
+            data: {
+                productId: '',
+                productInfo: [],
+                userId: '',
+                isCollected: '',
+                messageComment: '',
+                collectedNum: '',
+                commentInfos: []
+            },
+            mounted() {
+                this.userId = [[${session.userId}]]
+                this.productId = [[${session.productId}]];
+                this.getProductInfo();
+                this.checkCollected();
+                this.countCollected();
+                this.getComment();
+            },
+            methods: {
+                getProductInfo() {
+                    axios.post('/getProductInfo', {productId: this.productId})
+                        .then(response => {
+                            this.productInfo = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching product info:', error);
+                        });
+                },
+                checkCollected() {
+                    axios.post('/isCollected', {userId: this.userId, productId: this.productId})
+                        .then(response => {
+                            this.isCollected = response.data;
+                        })
+                        .catch(error => {
+                            console.error("添加失败");
+                        })
+                },
+                addShop() {
+                    axios.post('/addShop', {userId: this.userId, productId: this.productId})
+                        .then(response => {
+                        })
+                        .catch(error => {
+                            console.error('Error fetching add info:', error);
+                            alert('添加失败');
+                        })
+                        .finally(() => {
+                            this.checkCollected();
+                            this.countCollected();
+                        });
+                },
+                addComment() {
+                    if (!this.messageComment){
+                        alert('留言为空');
+                        return;
+                    }
+                    axios.post('/addComment', {
+                        userId: this.userId,
+                        productId: this.productId,
+                        messageComment: this.messageComment
+                    })
+                        .then(response => {
+                            if (response.data === 'success') {
+                                this.messageComment = '';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('error:', error);
+                            alert('评论失败');
+                        })
+                        .finally(() => {
+                            this.getComment();
+                        });
+                },
+                countCollected() {
+                    axios.post('/countCollected', {productId: this.productId})
+                        .then(response => {
+                            this.collectedNum = response.data;
+                        })
+                        .catch(error => {
+                            console.error('error:', error);
+                        });
+                },
+                getComment() {
+                    axios.post('/getComment', {productId: this.productId})
+                        .then(response => {
+                            this.commentInfos = response.data;
+                        })
+                        .catch(error => {
+                            console.error('error:', error);
+                        });
+                },
+                formatDateTime(isoString) {
+                    const date = new Date(isoString); // 使用 Date 对象解析 ISO 8601 格式的日期时间
+                    return date.toLocaleString(); // 使用 toLocaleString 方法格式化日期时间
+                },
+                purchase() {
+                    axios.post('/purchase', {userId: this.userId, productId: this.productId})
+                        .then(response => {
+                            if (response.data === 'success') {
+                                alert('购买成功');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

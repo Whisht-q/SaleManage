@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+
+        .letter {
+            font-size: 20px;
+        }
+
+        .img-size {
+            width: 382px; /* 设置宽度 */
+            height: 391px; /* 设置高度 */
+        }
+    </style>
+</head>
+<body>
+    <div id="management">
+        <div style="margin-top: 40px" class="ui grid">
+
+
+            <!--左侧菜单-->
+            <div class="three wide column">
+                <div class="ui vertical pointing menu">
+                    <a class="item active letter" th:href="@{/manage}">
+                        商品信息录入
+                    </a>
+                    <a class="item letter" th:href="@{/managerRegister}">
+                        管理员用户注册
+                    </a>
+                    <a class="item letter" th:href="@{/saleAnalyse}">
+                        销售统计
+                    </a>
+                    <a class="item letter" @click="logout">
+                        注销
+                    </a>
+                </div>
+            </div>
+
+            <!--右侧内容-->
+            <div class="eleven wide stretched column">
+                <form class="ui form" th:action="@{/upload}" method="post" enctype="multipart/form-data">
+                    <img class="img-size" th:src="@{'/images/'+${session.filename}}">
+                    <input style="margin-top: 20px" type="file" name="file"/>
+                    <input style="margin-top: 20px" type="submit" value="上传"/>
+                    <div style="margin-top: 20px" class="field">
+                        <div style="margin-bottom: 20px" class="ui compact menu">
+                            <div class="ui simple dropdown item">
+                                {{categoryName}}
+                                <i class="dropdown icon"></i>
+                                <div class="menu">
+                                    <div v-for="item in categoryItems" class="item" :key="item.categoryId"
+                                         @click="getId(item.categoryId,item.categoryName)">
+                                        {{item.categoryName}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <label>商品名称</label>
+                        <input v-model="productName" type="text" name="productName" placeholder="商品名称">
+                    </div>
+                    <div style="margin-top: 20px" class="field">
+                        <label>商品价格</label>
+                        <input v-model="price" type="text" name="price" placeholder="商品价格">
+                    </div>
+                    <div style="margin-top: 20px" class="field">
+                        <label>商品描述</label>
+                        <input v-model="productDescription" type="text" name="productDescription"
+                               placeholder="商品描述">
+                    </div>
+                    <div class="ui button positive" @click="insertProduct">Submit</div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#management',
+            data: {
+                productName: '',
+                productDescription: '',
+                price: '',
+                categoryItems: [],
+                categoryId: '',
+                categoryName: '请选择商品分类'
+            },
+            mounted() {
+                this.getCategoryItems();
+            },
+            methods: {
+                getCategoryItems() {
+                    axios.get('/getCategory')
+                        .then(response => {
+                            this.categoryItems = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching dropdown items:', error);
+                        });
+                },
+                getId(categoryId, categoryName) {
+                    this.categoryId = categoryId;
+                    this.categoryName = categoryName;
+                },
+                insertProduct() {
+                    if (!(this.productName && this.price && this.productDescription && this.categoryId)) {
+                        alert("请填写所有商品信息");
+                        return;
+                    }
+                    axios.post('/insertProduct', {
+                        productName: this.productName,
+                        price: this.price,
+                        categoryId: this.categoryId,
+                        productDescription: this.productDescription
+                    })
+                        .then(response => {
+                            if (response.data === 'success') {
+                                alert("添加成功");
+                                this.productName = '';
+                                this.price = '';
+                                this.productDescription = '';
+                                this.categoryName = '请选择商品分类' ;
+                                this.categoryId = '';
+                                axios.get('/removeSession')
+                                    .then(response => {
+
+                                    })
+                                    .catch(error => {
+                                        console.error('Error:', error);
+                                    });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                logout() {
+                    axios.get('/logout')
+                        .then(response => {
+                            window.location.href = '/login';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

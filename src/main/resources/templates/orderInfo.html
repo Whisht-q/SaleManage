@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>订单详情</title>
+    <link th:href="@{/css/semantic.min.css}" rel="stylesheet" type="text/css">
+    <style>
+        .lr {
+            margin-left: 20px;
+            margin-right: 20px;;
+        }
+
+        .letter {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="orders">
+        <div class="ui pointing menu">
+            <a class="item letter" th:href="@{/index}">
+                首页
+            </a>
+            <a class="item letter" th:href="@{/shopping}">
+                购物车
+            </a>
+            <a class="item letter active" th:href="@{/orderInfo}">
+                订单查询
+            </a>
+            <div class="ui compact right menu">
+                <div class="ui simple dropdown item">
+                    hello,<span th:text="${session.username}"></span>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" @click="userInfo">个人信息</div>
+                        <div class="item" @click="logout">注销</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui segment" v-for="info in orderInfos" :key="info.orderId">
+            <img class="ui middle aligned tiny image" :src="'/images/' + info.productId + '.png'">
+            <span class="lr letter">{{info.productName}}</span>
+            <span class="lr letter">总付款:{{info.totalAmount.toFixed(2)}}</span>
+            <span class="lr letter">下单时间:{{formatDateTime(info.orderDate)}}</span>
+            <span class="lr letter">预计送达时间{{info.arrivalDate}}</span>
+        </div>
+    </div>
+
+
+    <script th:src="@{/js/vue.js}" type="text/javascript"></script>
+    <script th:src="@{/js/axios.js}" type="text/javascript"></script>
+    <script>
+        new Vue({
+            el: '#orders',
+            data: {
+                userId: '',
+                orderInfos: []
+            },
+            mounted() {
+                this.userId = [[${session.userId}]];
+                this.getOrderInfos();
+            },
+            methods: {
+                logout() {
+                    axios.get('/logout')
+                        .then(response => {
+                            window.location.href = '/login';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                getOrderInfos() {
+                    axios.post('/getAllOrder', {userId: this.userId})
+                        .then(response => {
+                            this.orderInfos = response.data;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                formatDateTime(isoString) {
+                    const date = new Date(isoString); // 使用 Date 对象解析 ISO 8601 格式的日期时间
+                    return date.toLocaleString(); // 使用 toLocaleString 方法格式化日期时间
+                },
+                userInfo() {
+                    axios.get('/userInfo')
+                        .then(response => {
+                            window.location.href = '/userInfo';
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                }
+
+            }
+        });
+
+
+    </script>
+</body>
+</html>
